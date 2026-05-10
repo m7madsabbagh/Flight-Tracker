@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --aviation-bg: #0a0f1a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--aviation-bg);
+  color: #e2e8f0;
+}
+
+/* MapLibre override — keep controls subtle on dark theme */
+.maplibregl-ctrl-group {
+  background: #0f1729 !important;
+  border: 1px solid #1e2d4a !important;
+}
+
+.maplibregl-ctrl-group button {
+  background-color: transparent !important;
+  color: #64748b !important;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background-color: #141e35 !important;
+  color: #00d4ff !important;
+}
+
+.maplibregl-ctrl-attrib {
+  background: rgba(10, 15, 26, 0.8) !important;
+  color: #64748b !important;
+  font-size: 10px !important;
+}
+
+.maplibregl-ctrl-attrib a {
+  color: #64748b !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e2d4a;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00d4ff40;
+}
