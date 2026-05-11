@@ -1,4 +1,4 @@
-# MatchFlight ✈
+# Flight Tracker ✈
 
 A production-quality, live flight tracker web app built as a serious GitHub portfolio project.
 
