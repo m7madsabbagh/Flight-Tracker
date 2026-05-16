@@ -14,28 +14,24 @@ export function useWeather(lat: number | null, lon: number | null) {
       return;
     }
 
-    let cancelled = false;
+    const ctrl = new AbortController();
     setLoading(true);
     setError(null);
 
-    fetch(`/api/weather?lat=${lat}&lon=${lon}`)
+    fetch(`/api/weather?lat=${lat}&lon=${lon}`, { signal: ctrl.signal })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
-      .then((data: WeatherResponse) => {
-        if (!cancelled) setWeather(data);
-      })
+      .then((data: WeatherResponse) => setWeather(data))
       .catch((err: Error) => {
-        if (!cancelled) setError(err.message);
+        if (err.name !== "AbortError") setError(err.message);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!ctrl.signal.aborted) setLoading(false);
       });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => ctrl.abort();
   }, [lat, lon]);
 
   return { weather, loading, error };

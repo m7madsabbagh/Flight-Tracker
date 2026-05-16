@@ -44,6 +44,17 @@ body {
   color: #64748b !important;
 }
 
+/* Strip MapLibre popup chrome so we can style the content ourselves */
+.maplibregl-popup-content {
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+.maplibregl-popup-tip {
+  display: none !important;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 4px;

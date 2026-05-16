@@ -34,7 +34,8 @@ export async function GET(req: NextRequest) {
   try {
     const res = await fetch(url, {
       headers,
-      next: { revalidate: 0 },
+      cache: "no-store",
+      signal: AbortSignal.timeout(9000),
     });
 
     if (res.status === 429) {

@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   const url = `${WEATHER_BASE}/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&wind_speed_unit=knots`;
 
   try {
-    const res = await fetch(url, { next: { revalidate: 300 } });
+    const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
     if (!res.ok) {
       return NextResponse.json({ error: `Weather API error: ${res.status}` }, { status: res.status });
     }

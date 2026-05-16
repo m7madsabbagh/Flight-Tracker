@@ -8,14 +8,14 @@ export function useMapBounds() {
 
   const updateBounds = useCallback((b: MapBounds) => {
     setBounds((prev) => {
-      // Only update if the change is significant enough to warrant a new fetch
       if (!prev) return b;
-      const delta = 0.5;
+      // Trigger a new fetch only when the viewport has shifted enough
+      const threshold = 0.2;
       if (
-        Math.abs(b.lamin - prev.lamin) > delta ||
-        Math.abs(b.lomin - prev.lomin) > delta ||
-        Math.abs(b.lamax - prev.lamax) > delta ||
-        Math.abs(b.lomax - prev.lomax) > delta
+        Math.abs(b.lamin - prev.lamin) > threshold ||
+        Math.abs(b.lomin - prev.lomin) > threshold ||
+        Math.abs(b.lamax - prev.lamax) > threshold ||
+        Math.abs(b.lomax - prev.lomax) > threshold
       ) {
         return b;
       }

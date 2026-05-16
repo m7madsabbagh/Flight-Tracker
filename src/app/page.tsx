@@ -12,7 +12,6 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { StatsBar } from "@/components/ui/StatsBar";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
-// Dynamically import map to avoid SSR issues with maplibre-gl
 const FlightMap = dynamic(
   () => import("@/components/map/FlightMap").then((m) => m.FlightMap),
   {
@@ -36,7 +35,7 @@ const DEFAULT_FILTERS: AircraftFilters = {
   country: "",
 };
 
-const REFRESH_INTERVAL = Number(process.env.NEXT_PUBLIC_REFRESH_INTERVAL ?? 10000);
+const REFRESH_INTERVAL = Math.max(5000, Number(process.env.NEXT_PUBLIC_REFRESH_INTERVAL) || 10000);
 
 export default function HomePage() {
   const { bounds, updateBounds } = useMapBounds();
@@ -56,8 +55,13 @@ export default function HomePage() {
   );
 
   const inAirCount = useMemo(() => aircraft.filter((a) => !a.onGround).length, [aircraft]);
-  const onGroundCount = aircraft.length - inAirCount;
 
+  const handleSelectIcao = useCallback((icao24: string) => {
+    setSelectedIcao(icao24);
+    setSidebarMode("detail");
+  }, []);
+
+  // Used by WatchlistPanel when clicking a watched aircraft
   const handleSelectAircraft = useCallback((a: Aircraft) => {
     setSelectedIcao(a.icao24);
     setSidebarMode("detail");
@@ -95,31 +99,32 @@ export default function HomePage() {
       <StatsBar
         total={filteredAircraft.length}
         inAir={inAirCount}
-        onGround={onGroundCount}
+        onGround={aircraft.length - inAirCount}
         loading={loading}
         lastUpdated={lastUpdated}
         error={error}
       />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Map fills remaining space */}
         <div className="relative flex-1 overflow-hidden">
           <FlightMap
             aircraft={filteredAircraft}
             selectedIcao={selectedIcao}
             watchlist={watchlist}
             followIcao={followIcao}
-            onSelectAircraft={handleSelectAircraft}
+            onSelectIcao={handleSelectIcao}
             onBoundsChange={handleBoundsChange}
           />
 
-          {/* Follow mode indicator */}
           {followIcao && (
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 pointer-events-auto">
               <div className="flex items-center gap-2 rounded-full border border-aviation-accent bg-aviation-panel/90 px-3 py-1.5 text-xs font-mono text-aviation-accent backdrop-blur-sm">
                 <span className="animate-pulse">◎</span>
                 Following {selectedAircraft?.callsign ?? selectedIcao}
-                <button onClick={() => setFollowIcao(null)} className="ml-1 text-aviation-muted hover:text-aviation-text">
+                <button
+                  onClick={() => setFollowIcao(null)}
+                  className="ml-1 text-aviation-muted hover:text-aviation-text"
+                >
                   ✕
                 </button>
               </div>
@@ -127,7 +132,6 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Sidebar */}
         <Sidebar
           mode={sidebarMode}
           selectedAircraft={selectedAircraft}

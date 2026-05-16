@@ -2,7 +2,9 @@
 
 import type { Aircraft } from "@/types/aircraft";
 import { Badge } from "@/components/ui/Badge";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useWeather } from "@/hooks/useWeather";
+import { useRouteInfo } from "@/hooks/useRouteInfo";
 import {
   formatAltitude,
   formatCoord,
@@ -34,6 +36,7 @@ export function AircraftDetailPanel({
 }: Props) {
   const trend = getVerticalTrend(aircraft.verticalRate);
   const { weather } = useWeather(aircraft.latitude, aircraft.longitude);
+  const { route, loading: routeLoading } = useRouteInfo(aircraft.icao24);
 
   const trendIcon = trend === "climbing" ? "▲" : trend === "descending" ? "▼" : "—";
   const trendColor =
@@ -58,39 +61,38 @@ export function AircraftDetailPanel({
             {aircraft.icao24.toUpperCase()} · {aircraft.originCountry}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <ActionButton
-            onClick={onToggleWatch}
-            active={isWatched}
-            activeClass="text-aviation-warning"
-            title={isWatched ? "Remove from watchlist" : "Add to watchlist"}
-          >
+        <div className="flex items-center gap-1">
+          <ActionBtn onClick={onToggleWatch} active={isWatched} activeClass="text-aviation-warning" title={isWatched ? "Remove from watchlist" : "Add to watchlist"}>
             {isWatched ? "★" : "☆"}
-          </ActionButton>
-          <ActionButton
-            onClick={onFollow}
-            active={following}
-            activeClass="text-aviation-accent"
-            title={following ? "Stop following" : "Follow aircraft"}
-          >
+          </ActionBtn>
+          <ActionBtn onClick={onFollow} active={following} activeClass="text-aviation-accent" title={following ? "Stop following" : "Follow aircraft"}>
             ◎
-          </ActionButton>
-          <button
-            onClick={onClose}
-            className="p-1.5 text-aviation-muted hover:text-aviation-text transition-colors"
-            title="Close"
-          >
-            ✕
-          </button>
+          </ActionBtn>
+          <button onClick={onClose} className="p-1.5 text-aviation-muted hover:text-aviation-text">✕</button>
         </div>
       </div>
 
+      {/* Route banner */}
+      <div className="border-b border-aviation-border px-4 py-2">
+        {routeLoading ? (
+          <LoadingSpinner size="sm" label="Fetching route…" />
+        ) : route?.departure || route?.arrival ? (
+          <div className="flex items-center gap-2 font-mono text-sm">
+            <span className="font-bold text-aviation-text">{route.departure ?? "????"}</span>
+            <span className="text-aviation-dim">→</span>
+            <span className="font-bold text-aviation-text">{route.arrival ?? "????"}</span>
+          </div>
+        ) : (
+          <p className="text-xs text-aviation-dim">Route data unavailable</p>
+        )}
+      </div>
+
       {/* Status badges */}
-      <div className="flex gap-2 px-4 py-2 border-b border-aviation-border">
+      <div className="flex flex-wrap gap-2 px-4 py-2 border-b border-aviation-border">
         <Badge variant={aircraft.onGround ? "warning" : "success"}>
           {aircraft.onGround ? "ON GROUND" : "IN AIR"}
         </Badge>
-        {aircraft.squawk && <Badge variant="accent">SQUAWK {aircraft.squawk}</Badge>}
+        {aircraft.squawk && <Badge variant="accent">SQK {aircraft.squawk}</Badge>}
         {trend !== "level" && (
           <Badge variant={trend === "climbing" ? "success" : "danger"}>
             {trend.toUpperCase()}
@@ -99,7 +101,7 @@ export function AircraftDetailPanel({
       </div>
 
       {/* Data rows */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         <Section title="Position">
           <Row label="Latitude" value={formatCoord(aircraft.latitude)} />
           <Row label="Longitude" value={formatCoord(aircraft.longitude)} />
@@ -109,10 +111,7 @@ export function AircraftDetailPanel({
 
         <Section title="Movement">
           <Row label="Speed" value={formatSpeed(aircraft.velocity)} />
-          <Row
-            label="Heading"
-            value={`${formatHeading(aircraft.trueTrack)} (${headingToCompass(aircraft.trueTrack)})`}
-          />
+          <Row label="Heading" value={`${formatHeading(aircraft.trueTrack)} (${headingToCompass(aircraft.trueTrack)})`} />
           <Row label="Vert. Rate" value={formatVerticalRate(aircraft.verticalRate)} />
         </Section>
 
@@ -127,7 +126,10 @@ export function AircraftDetailPanel({
         {weather && (
           <Section title="Local Weather">
             <Row label="Temp" value={`${weather.current_weather.temperature}°C`} />
-            <Row label="Wind" value={`${Math.round(weather.current_weather.windspeed)} kts @ ${Math.round(weather.current_weather.winddirection)}°`} />
+            <Row
+              label="Wind"
+              value={`${Math.round(weather.current_weather.windspeed)} kts @ ${Math.round(weather.current_weather.winddirection)}°`}
+            />
             <Row label="Conditions" value={weatherCodeToLabel(weather.current_weather.weathercode)} />
           </Section>
         )}
@@ -138,7 +140,7 @@ export function AircraftDetailPanel({
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="mb-3">
+    <div>
       <p className="text-[10px] font-semibold uppercase tracking-widest text-aviation-dim mb-1.5">
         {title}
       </p>
@@ -158,12 +160,8 @@ function Row({ label, value, mono }: { label: string; value: string; mono?: bool
   );
 }
 
-function ActionButton({
-  children,
-  onClick,
-  active,
-  activeClass,
-  title,
+function ActionBtn({
+  children, onClick, active, activeClass, title,
 }: {
   children: React.ReactNode;
   onClick: () => void;
@@ -175,9 +173,7 @@ function ActionButton({
     <button
       onClick={onClick}
       title={title}
-      className={`p-1.5 text-lg transition-colors ${
-        active ? activeClass : "text-aviation-muted hover:text-aviation-text"
-      }`}
+      className={`p-1.5 text-lg transition-colors ${active ? activeClass : "text-aviation-muted hover:text-aviation-text"}`}
     >
       {children}
     </button>

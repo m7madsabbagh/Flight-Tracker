@@ -22,14 +22,13 @@ export function useAircraftData(
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const fetch = useCallback(async () => {
+  const doFetch = useCallback(async () => {
     if (!bounds) return;
 
     abortRef.current?.abort();
     abortRef.current = new AbortController();
 
     setLoading(true);
-    setError(null);
 
     const params = new URLSearchParams({
       lamin: bounds.lamin.toFixed(4),
@@ -39,36 +38,44 @@ export function useAircraftData(
     });
 
     try {
-      const res = await window.fetch(`/api/aircraft?${params}`, {
+      const res = await fetch(`/api/aircraft?${params}`, {
         signal: abortRef.current.signal,
       });
 
       if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error ?? `HTTP ${res.status}`);
+        const body = await res.json().catch(() => ({}));
+        throw new Error(
+          (body as { error?: string }).error ?? `OpenSky returned ${res.status}`
+        );
       }
 
       const data = await res.json();
       const parsed: Aircraft[] = (data.states ?? []).map(parseStateVector);
       setAircraft(parsed);
       setLastUpdated(new Date());
+      setError(null);
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") return;
-      setError(err instanceof Error ? err.message : "Unknown error");
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      // Suppress "Failed to fetch" noise — show a friendlier message
+      setError(
+        msg.includes("Failed to fetch") || msg.includes("timeout")
+          ? "OpenSky unavailable — retrying…"
+          : msg
+      );
     } finally {
       setLoading(false);
     }
   }, [bounds]);
 
-  // Initial fetch + interval
   useEffect(() => {
-    fetch();
-    const id = setInterval(fetch, intervalMs);
+    doFetch();
+    const id = setInterval(doFetch, intervalMs);
     return () => {
       clearInterval(id);
       abortRef.current?.abort();
     };
-  }, [fetch, intervalMs]);
+  }, [doFetch, intervalMs]);
 
-  return { aircraft, loading, error, lastUpdated, refresh: fetch };
+  return { aircraft, loading, error, lastUpdated, refresh: doFetch };
 }
