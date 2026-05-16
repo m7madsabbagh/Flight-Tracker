@@ -49,6 +49,17 @@ export function formatTimestamp(unix: number | null): string {
   });
 }
 
+/** Format Unix timestamp as "16 May 14:35 UTC" */
+export function formatDepartureTime(unix: number | null): string {
+  if (unix == null) return "";
+  const d = new Date(unix * 1000);
+  const day = d.getUTCDate();
+  const month = d.toLocaleString("en", { month: "short", timeZone: "UTC" });
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${day} ${month} ${hh}:${mm} UTC`;
+}
+
 /** Format lat/lng coordinate */
 export function formatCoord(val: number | null, decimals = 4): string {
   if (val == null) return "N/A";

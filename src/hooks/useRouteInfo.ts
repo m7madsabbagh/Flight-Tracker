@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { AirportInfo } from "@/utils/airports";
 
-interface RouteInfo {
-  departure: string | null;
-  arrival: string | null;
+export interface RouteInfo {
+  departure: AirportInfo | null;
+  arrival: AirportInfo | null;
+  departureTime: number | null;
 }
 
 export function useRouteInfo(icao24: string | null) {
@@ -12,10 +14,7 @@ export function useRouteInfo(icao24: string | null) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!icao24) {
-      setRoute(null);
-      return;
-    }
+    if (!icao24) { setRoute(null); return; }
 
     const ctrl = new AbortController();
     setLoading(true);
@@ -23,12 +22,8 @@ export function useRouteInfo(icao24: string | null) {
     fetch(`/api/routes?icao24=${icao24}`, { signal: ctrl.signal })
       .then((r) => r.json())
       .then((data: RouteInfo) => setRoute(data))
-      .catch((err: Error) => {
-        if (err.name !== "AbortError") setRoute(null);
-      })
-      .finally(() => {
-        if (!ctrl.signal.aborted) setLoading(false);
-      });
+      .catch((err: Error) => { if (err.name !== "AbortError") setRoute(null); })
+      .finally(() => { if (!ctrl.signal.aborted) setLoading(false); });
 
     return () => ctrl.abort();
   }, [icao24]);

@@ -8,6 +8,7 @@ import { useRouteInfo } from "@/hooks/useRouteInfo";
 import {
   formatAltitude,
   formatCoord,
+  formatDepartureTime,
   formatHeading,
   formatSpeed,
   formatTimestamp,
@@ -73,14 +74,66 @@ export function AircraftDetailPanel({
       </div>
 
       {/* Route banner */}
-      <div className="border-b border-aviation-border px-4 py-2">
+      <div className="border-b border-aviation-border px-4 py-2.5">
         {routeLoading ? (
           <LoadingSpinner size="sm" label="Fetching route…" />
         ) : route?.departure || route?.arrival ? (
-          <div className="flex items-center gap-2 font-mono text-sm">
-            <span className="font-bold text-aviation-text">{route.departure ?? "????"}</span>
-            <span className="text-aviation-dim">→</span>
-            <span className="font-bold text-aviation-text">{route.arrival ?? "????"}</span>
+          <div className="space-y-1.5">
+            <div className="flex items-start gap-2">
+              {/* Departure */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="font-mono text-sm font-bold text-aviation-text">
+                    {route.departure?.iata || route.departure?.icao || "????"}
+                  </span>
+                  {route.departure?.iata && route.departure.iata !== route.departure.icao && (
+                    <span className="font-mono text-[10px] text-aviation-muted">
+                      {route.departure.icao}
+                    </span>
+                  )}
+                </div>
+                {route.departure?.name && (
+                  <p className="text-[10px] text-aviation-dim truncate">{route.departure.name}</p>
+                )}
+                {route.departure?.city && (
+                  <p className="text-[10px] text-aviation-muted">
+                    {route.departure.city}{route.departure.country ? `, ${route.departure.country}` : ""}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-col items-center pt-1 shrink-0">
+                <span className="text-aviation-accent text-sm">→</span>
+              </div>
+
+              {/* Arrival */}
+              <div className="flex-1 min-w-0 text-right">
+                <div className="flex items-baseline gap-1.5 justify-end">
+                  {route.arrival?.iata && route.arrival.iata !== route.arrival.icao && (
+                    <span className="font-mono text-[10px] text-aviation-muted">
+                      {route.arrival.icao}
+                    </span>
+                  )}
+                  <span className="font-mono text-sm font-bold text-aviation-text">
+                    {route.arrival?.iata || route.arrival?.icao || "????"}
+                  </span>
+                </div>
+                {route.arrival?.name && (
+                  <p className="text-[10px] text-aviation-dim truncate">{route.arrival.name}</p>
+                )}
+                {route.arrival?.city && (
+                  <p className="text-[10px] text-aviation-muted">
+                    {route.arrival.city}{route.arrival.country ? `, ${route.arrival.country}` : ""}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {route.departureTime && (
+              <p className="text-[10px] text-aviation-muted font-mono">
+                Departed {formatDepartureTime(route.departureTime)}
+              </p>
+            )}
           </div>
         ) : (
           <p className="text-xs text-aviation-dim">Route data unavailable</p>
